@@ -1,0 +1,2 @@
+# PacmanAI
+COSE361 (CS188)
