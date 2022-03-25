@@ -17,6 +17,7 @@ In search.py, you will implement generic search algorithms which are called by
 Pacman agents (in searchAgents.py).
 """
 
+from multiprocessing.connection import answer_challenge
 import util
 
 class SearchProblem:
@@ -87,7 +88,21 @@ def depthFirstSearch(problem):
     print("Start's successors:", problem.getSuccessors(problem.getStartState()))
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+
+    visited = set()
+    fringe = util.Stack()
+    fringe.push([problem.getStartState(), []]) #position, path
+    while not fringe.isEmpty():
+        node, path = fringe.pop()
+        if problem.isGoalState(node):
+            return path
+        if node not in visited:
+            visited.add(node)
+            for nextNode, nextAction, _ in problem.getSuccessors(node):
+                if nextNode in visited: continue
+                newpath = path + [nextAction]
+                fringe.push((nextNode, newpath))
+    return list()
 
 def breadthFirstSearch(problem):
     """Search the shallowest nodes in the search tree first."""
