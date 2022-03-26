@@ -93,12 +93,12 @@ def depthFirstSearch(problem):
     fringe = util.Stack()
     fringe.push((problem.getStartState(), [])) #position, path
     while not fringe.isEmpty():
-        node, path = fringe.pop()
-        if problem.isGoalState(node):
+        pos, path = fringe.pop()
+        if problem.isGoalState(pos):
             return path
-        if node not in visited:
-            visited.add(node)
-            for nextNode, nextAction, _ in problem.getSuccessors(node):
+        if pos not in visited:
+            visited.add(pos)
+            for nextNode, nextAction, _ in problem.getSuccessors(pos):
                 if nextNode in visited: continue
                 newpath = path + [nextAction]
                 fringe.push((nextNode, newpath))
@@ -113,12 +113,12 @@ def breadthFirstSearch(problem):
     fringe = util.Queue()
     fringe.push((problem.getStartState(), [])) #position, path
     while not fringe.isEmpty():
-        node, path = fringe.pop()
-        if problem.isGoalState(node):
+        pos, path = fringe.pop()
+        if problem.isGoalState(pos):
             return path
-        if node not in visited:
-            visited.add(node)
-            for nextNode, nextAction, _ in problem.getSuccessors(node):
+        if pos not in visited:
+            visited.add(pos)
+            for nextNode, nextAction, _ in problem.getSuccessors(pos):
                 if nextNode in visited: continue
                 newpath = path + [nextAction]
                 fringe.push((nextNode, newpath))
@@ -131,18 +131,18 @@ def uniformCostSearch(problem):
 
     visited = set()
     fringe = util.PriorityQueue()
-    fringe.push((problem.getStartState(), [], 0), 0) #(position, path, priority), priority
+    fringe.push((problem.getStartState(), [], 0), 0) #(position, path, cost), cost
     while not fringe.isEmpty():
-        pos, path, priority = fringe.pop()
+        pos, path, cost = fringe.pop()
         if problem.isGoalState(pos):
             return path
         if pos not in visited:
             visited.add(pos)
-            for nextPos, nextAction, nextPriority in problem.getSuccessors(pos):
+            for nextPos, nextAction, nextCost in problem.getSuccessors(pos):
                 if nextPos in visited: continue
                 newpath = path + [nextAction]
-                newPriority = priority + nextPriority
-                fringe.push((nextPos, newpath, newPriority), newPriority)
+                newCost = cost + nextCost
+                fringe.push((nextPos, newpath, newCost), newCost)
     return list()
 
 def nullHeuristic(state, problem=None):
@@ -158,7 +158,7 @@ def aStarSearch(problem, heuristic=nullHeuristic):
     visited = set()
     fringe = util.PriorityQueue()
     startPos = problem.getStartState()
-    fringe.push((startPos, [], 0), heuristic(startPos, problem)) #(position, path, cost), cost+H
+    fringe.push((startPos, [], 0), heuristic(startPos, problem)) #(position, path, cost), cost+H(x)
     while not fringe.isEmpty():
         pos, path, cost = fringe.pop()
         if problem.isGoalState(pos):
@@ -171,7 +171,6 @@ def aStarSearch(problem, heuristic=nullHeuristic):
                 newCost = cost + nextCost
                 fringe.push((nextPos, newpath, newCost), newCost + heuristic(nextPos, problem))
     return list()
-    util.raiseNotDefined()
 
 
 # Abbreviations

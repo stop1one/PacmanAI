@@ -262,6 +262,21 @@ def euclideanHeuristic(position, problem, info={}):
     xy2 = problem.goal
     return ( (xy1[0] - xy2[0]) ** 2 + (xy1[1] - xy2[1]) ** 2 ) ** 0.5
 
+def myHeuristic(position, problem, info={}):
+    "You build your own heuristic funtion here"
+    pos = position
+    goalPos = problem.goal
+    startPos = problem.startState
+    v1 = (pos[0]-goalPos[0], pos[1]-goalPos[1])
+    v2 = (startPos[0]-goalPos[0], startPos[1]-goalPos[1])
+    v1Size = (v1[0]**2 + v1[1]**2) ** 0.5
+    v2Size = (v2[0]**2 + v2[1]**2) ** 0.5
+    if v1Size*v2Size == 0: return 0
+    CosSimilarity = (v1[0]*v2[0] + v1[1]*v2[1]) / (v1Size*v2Size) # (-1~1)
+    return manhattanHeuristic(position, problem) + 1 - CosSimilarity
+    
+    util.raiseNotDefined()
+
 #####################################################
 # This portion is incomplete.  Time to write code!  #
 #####################################################
