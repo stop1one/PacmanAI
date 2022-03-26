@@ -91,7 +91,7 @@ def depthFirstSearch(problem):
 
     visited = set()
     fringe = util.Stack()
-    fringe.push([problem.getStartState(), []]) #position, path
+    fringe.push((problem.getStartState(), [])) #position, path
     while not fringe.isEmpty():
         node, path = fringe.pop()
         if problem.isGoalState(node):
@@ -111,7 +111,7 @@ def breadthFirstSearch(problem):
 
     visited = set()
     fringe = util.Queue()
-    fringe.push([problem.getStartState(), []]) #position, path
+    fringe.push((problem.getStartState(), [])) #position, path
     while not fringe.isEmpty():
         node, path = fringe.pop()
         if problem.isGoalState(node):
@@ -123,12 +123,27 @@ def breadthFirstSearch(problem):
                 newpath = path + [nextAction]
                 fringe.push((nextNode, newpath))
     return list()
-    
+
 
 def uniformCostSearch(problem):
     """Search the node of least total cost first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+
+    visited = set()
+    fringe = util.PriorityQueue()
+    fringe.push((problem.getStartState(), [], 0), 0) #(position, path, priority), priority
+    while not fringe.isEmpty():
+        pos, path, priority = fringe.pop()
+        if problem.isGoalState(pos):
+            return path
+        if pos not in visited:
+            visited.add(pos)
+            for nextPos, nextAction, nextPriority in problem.getSuccessors(pos):
+                if nextPos in visited: continue
+                newpath = path + [nextAction]
+                newPriority = priority + nextPriority
+                fringe.push((nextPos, newpath, newPriority), newPriority)
+    return list()
 
 def nullHeuristic(state, problem=None):
     """
