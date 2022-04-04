@@ -267,8 +267,8 @@ def myHeuristic(position, problem, info={}):
     pos = position
     goalPos = problem.goal
     startPos = problem.startState
-    v1 = (pos[0]-goalPos[0], pos[1]-goalPos[1])
-    v2 = (startPos[0]-goalPos[0], startPos[1]-goalPos[1])
+    v1 = (pos[0]-startPos[0], pos[1]-startPos[1])
+    v2 = (goalPos[0]-startPos[0], goalPos[1]-startPos[1])
     v1Size = (v1[0]**2 + v1[1]**2) ** 0.5
     v2Size = (v2[0]**2 + v2[1]**2) ** 0.5
     if v1Size*v2Size == 0: return 0
