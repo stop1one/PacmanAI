@@ -1,2 +1,2 @@
 # PacmanAI
-COSE361 (CS188)
+Korea Univ COSE361 (CS188)
