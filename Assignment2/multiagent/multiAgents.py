@@ -12,6 +12,7 @@
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
 
 
+from multiprocessing import managers
 from util import manhattanDistance
 from game import Directions
 import random, util
@@ -71,10 +72,24 @@ class ReflexAgent(Agent):
         newPos = successorGameState.getPacmanPosition()
         newFood = successorGameState.getFood()
         newGhostStates = successorGameState.getGhostStates()
-        newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
+        layout = currentGameState.getWalls()
+        maxDist = layout.height + layout.width
 
         "*** YOUR CODE HERE ***"
-        return successorGameState.getScore()
+        GhostDists = [manhattanDistance(newPos, gState.getPosition()) for gState in newGhostStates if gState.scaredTimer == 0]
+        minGhostDist = min(GhostDists+[maxDist])
+        #if minGhostDist == 0: return float("-inf")
+        
+        if newFood[newPos[0]][newPos[1]]:
+            minFoodDist = 0
+        else:
+            foodDists = [manhattanDistance(newPos, fPos) for fPos in newFood.asList()]
+            minFoodDist = min(foodDists, default=0)
+
+        ghostCost = -2 / (minGhostDist + 1)
+        foodCost = 1 / (minFoodDist + 1)
+
+        return successorGameState.getScore() + ghostCost + foodCost
 
 def scoreEvaluationFunction(currentGameState):
     """
