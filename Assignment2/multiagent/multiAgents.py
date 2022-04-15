@@ -185,7 +185,49 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         Returns the minimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        alpha = float("-inf")
+        beta = float("inf")
+        return self.AlphaBetaFunc(gameState, self.depth, alpha, beta)[1]
+
+    def AlphaBetaFunc(self, gameState, depth, a, b, agentIndex=0):
+        if depth == 0 or gameState.isWin() or gameState.isLose():
+            return self.evaluationFunction(gameState), -1
+        
+        if agentIndex == 0:
+            return self.maxScore(gameState, depth, a, b)
+        else:
+            return self.minScore(gameState, depth, a, b, agentIndex)
+
+    def maxScore(self, gameState, depth, a, b, agentIndex=0):
+        v = float("-inf")
+        succActions = gameState.getLegalActions(agentIndex)
+        nextAction = Directions.STOP
+        for action in succActions:
+            successorState = gameState.generateSuccessor(agentIndex, action)
+            preMax = max(v, self.AlphaBetaFunc(successorState, depth, a, b, agentIndex+1)[0])
+            if preMax > b: 
+                return preMax, action
+            if preMax > v:
+                v, nextAction = preMax, action
+                a = max(a, v)
+        return v, nextAction
+    
+    def minScore(self, gameState, depth, a, b, agentIndex):
+        v = float("inf")
+        succActions = gameState.getLegalActions(agentIndex)
+        if agentIndex == gameState.getNumAgents()-1:
+            nextAgentIndex, nextDepth = 0, depth-1
+        else:
+            nextAgentIndex, nextDepth = agentIndex + 1, depth
+        nextAction = Directions.STOP
+        for action in succActions:
+            successorState = gameState.generateSuccessor(agentIndex, action)
+            preMin = min(v, self.AlphaBetaFunc(successorState, nextDepth, a, b, nextAgentIndex)[0])
+            if preMin < a: return preMin, action
+            if preMin < v:
+                v, nextAction = preMin, action
+                b = min(b, v)
+        return v, nextAction
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
