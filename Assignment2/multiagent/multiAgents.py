@@ -205,7 +205,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         for action in succActions:
             successorState = gameState.generateSuccessor(agentIndex, action)
             preMax = max(v, self.AlphaBetaFunc(successorState, depth, a, b, agentIndex+1)[0])
-            if preMax > b: 
+            if preMax > b:
                 return preMax, action
             if preMax > v:
                 v, nextAction = preMax, action
