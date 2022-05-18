@@ -38,6 +38,9 @@ class MyAgent(Agent):
 
         "*** YOUR CODE HERE ***"
 
+        problem = AnyFoodSearchProblem(state, self.index)
+        return search.bfs(problem)[0]
+
         raise NotImplementedError()
 
     def initialize(self):
@@ -48,6 +51,8 @@ class MyAgent(Agent):
         """
 
         "*** YOUR CODE HERE"
+
+        return
 
         raise NotImplementedError()
 
