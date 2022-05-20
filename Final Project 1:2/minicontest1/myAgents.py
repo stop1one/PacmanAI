@@ -23,8 +23,12 @@ IMPORTANT
 `agent` defines which agent you will use. By default, it is set to ClosestDotAgent,
 but when you're ready to test your own agent, replace it with MyAgent
 """
-def createAgents(num_pacmen, agent='ClosestDotAgent'):
-    return [eval(agent)(index=i) for i in range(num_pacmen)]
+def createAgents(num_pacmen, agent='MyAgent'):
+    return [eval('MyAgent')(index=i) for i in range(num_pacmen)]
+
+path = []
+movingIdx = []
+isFood = []
 
 class MyAgent(Agent):
     """
@@ -37,12 +41,79 @@ class MyAgent(Agent):
         """
 
         "*** YOUR CODE HERE ***"
+        global movingIdx, path
+        
+        agentIdx = self.index
+        food = state.getFood()
+        problem = AnyFoodSearchProblem(state, agentIdx)
 
+        if agentIdx >= 10: return search.bfs(problem)[0]
+
+        areaIndex = agentIdx%4
+        areaRange = [[(0, food.width//2),  (0, food.height//2)], [(0, food.width//2),  (food.height//2+1, food.height)], [(food.width//2+1, food.width), (0, food.height//2)], [(food.width//2+1, food.width), (food.height//2+1, food.height)]]
+        w, h = areaRange[areaIndex][0], areaRange[areaIndex][1]
+
+        if isFood[areaIndex]: isFood[areaIndex] = self.isFoodInArea(food, w, h)
+ 
+        if isFood[areaIndex]:
+            if movingIdx[agentIdx] >= len(path[agentIdx]):
+                path[agentIdx] = self.moveToArea(state, w, h)
+                movingIdx[agentIdx] = 0
+                nextAction = path[agentIdx][movingIdx[agentIdx]]
+                movingIdx[agentIdx] += 1
+                return nextAction
+            else:
+                nextAction = path[agentIdx][movingIdx[agentIdx]]
+                movingIdx[agentIdx] += 1
+                return nextAction
+
+        else: 
+            #return search.bfs(problem)[0]
+            return self.efficientBFS(state)
+
+    def moveToArea(self, state, w, h):
         problem = AnyFoodSearchProblem(state, self.index)
-        return search.bfs(problem)[0]
 
-        raise NotImplementedError()
+        #BFS
+        fringe = util.Queue()
+        current = (problem.getStartState(), [])
+        fringe.push(current)
+        closed = []
+        
+        while not fringe.isEmpty():
+            node, path = fringe.pop()
+            if problem.isGoalState(node) and w[0] <= node[0] <= w[1] and h[0] <= node[1] <= h[1]:
+                return path
+            if not node in closed:
+                closed.append(node)
+                for coord, move, cost in problem.getSuccessors(node):
+                    fringe.push((coord, path + [move])) 
+        return self.efficientBFS(state)
 
+    def isFoodInArea(self, food, w, h):
+        for j in range(w[0], w[1]):
+            for k in range(h[0], h[1]):
+                if food[j][k]: return True
+        return False
+
+    # Algorithm : Using bfs path until any agent eat food
+    # This algorithm doesn't have to calculate bfs path every execution
+    def efficientBFS(self, state):
+        global path, movingIdx
+        agentIdx = self.index
+        problem = AnyFoodSearchProblem(state, agentIdx)
+
+        if movingIdx[agentIdx] >= len(path[agentIdx]):
+            path[agentIdx] = search.bfs(problem)
+            movingIdx[agentIdx] = 0
+            nextAction = path[agentIdx][movingIdx[agentIdx]]
+            movingIdx[agentIdx] += 1
+            return nextAction
+        else:
+            nextAction = path[agentIdx][movingIdx[agentIdx]]
+            movingIdx[agentIdx] += 1
+            return nextAction
+        
     def initialize(self):
         """
         Intialize anything you want to here. This function is called
@@ -52,10 +123,14 @@ class MyAgent(Agent):
 
         "*** YOUR CODE HERE"
 
+        global path, movingIdx, isFood
+        path = [list() for _ in range(10)]
+        movingIdx = [0 for _ in range(10)]
+        isFood = [True for _ in range(4)]
+
         return
 
-        raise NotImplementedError()
-
+        
 """
 Put any other SearchProblems or search methods below. You may also import classes/methods in
 search.py and searchProblems.py. (ClosestDotAgent as an example below)
@@ -104,6 +179,7 @@ class ClosestDotAgent(Agent):
         return pacmanCurrent[1]
 
     def getAction(self, state):
+        return search.bfs(AnyFoodSearchProblem(state, self.index))[0]
         return self.findPathToClosestDot(state)[0]
 
 class AnyFoodSearchProblem(PositionSearchProblem):
