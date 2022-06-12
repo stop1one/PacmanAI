@@ -200,7 +200,7 @@ class OffensiveReflexAgent(MyReflexAgent):
       for food in foodList:
         myDist = self.getMazeDistance(myPos, food)
         enemyDist = min([self.getMazeDistance(food, o.getPosition()) for o in opponents])
-        if myDist < enemyDist+5: safeFood.append(food)
+        if myDist < enemyDist+4: safeFood.append(food)
 
       # Compute distance to the nearest safe food
       if len(safeFood) > 0:
@@ -252,7 +252,7 @@ class OffensiveReflexAgent(MyReflexAgent):
             features['distanceToSafeFood'] = 0
           
           if foodCarrying >= 3:
-            features['distanceToTeam'] = minTeamDist * 3
+            features['distanceToTeam'] = minTeamDist * foodCarrying
             features['distanceToEnemies'] = minEnemyDist/2
           
       else:
@@ -350,6 +350,6 @@ class DefensiveReflexAgent(MyReflexAgent):
       'stop': -100, 
       'reverse': -3, 
       'distanceToTeamBorder':-1, 
-      'ReturnToCapsules':3, 
+      'ReturnToCapsules':2.5, 
       'enemyDistance': -3}
 
