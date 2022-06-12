@@ -12,6 +12,7 @@
 # Pieter Abbeel (pabbeel@cs.berkeley.edu).
 
 
+from pydoc import describe
 from captureAgents import CaptureAgent
 import random, time, util
 from game import Directions
@@ -132,6 +133,11 @@ class MyReflexAgent(CaptureAgent):
     """
     features = self.getFeatures(gameState, action)
     weights = self.getWeights(gameState, action)
+    # if self.index == 2:
+    #   print(self.index)
+    #   print(features)
+    #   print(weights)
+    #   print(features * weights, action)
     return features * weights
 
   def getFeatures(self, gameState, action):
@@ -162,8 +168,10 @@ class OffensiveReflexAgent(MyReflexAgent):
 
     successor = self.getSuccessor(gameState, action)
 
-    foodList = self.getFood(successor).asList()    
-    features['successorScore'] = -len(foodList)#self.getScore(successor
+    foodList = self.getFood(successor).asList()
+    preFoodList = self.getFood(gameState).asList()
+    doesEatFood = len(preFoodList) - len(foodList)
+    features['successorScore'] = doesEatFood
     
     if len(foodList) > 0: # This should always be True,  but better safe than sorry
 
@@ -185,6 +193,7 @@ class OffensiveReflexAgent(MyReflexAgent):
       # define
       opponents = [successor.getAgentState(i) for i in self.getOpponents(successor)]
       enemies = [a for a in opponents if not a.isPacman and a.getPosition() != None]
+      foodCarrying = gameState.getAgentState(self.index).numCarrying
 
       # evaluate which the food is safe or not
       safeFood = []
@@ -196,30 +205,83 @@ class OffensiveReflexAgent(MyReflexAgent):
       # Compute distance to the nearest safe food
       if len(safeFood) > 0:
         minFoodDist = min([self.getMazeDistance(myPos, food) for food in safeFood])
+        features['distanceToSafeFood'] = minFoodDist
       else:
         minFoodDist = min([self.getMazeDistance(myPos, food) for food in foodList])
-      features['distanceToFood'] = minFoodDist
+        features['distanceToFood'] = minFoodDist
+
+      # If the agent is ghost and the opponent is near, kill it
+      minOpponentDist = min([self.getMazeDistance(myPos, o.getPosition()) for o in opponents])
+      if not myState.isPacman and minOpponentDist <= 5:
+        features['killOpponent'] = 5 - minOpponentDist
 
       # Compute distance to the nearest enemies
-      minEnemyDist = min([self.getMazeDistance(myPos, e.getPosition()) for e in enemies])
-      if minEnemyDist <= 2:
-        features['distanceToEnemies'] = minEnemyDist
-      elif minEnemyDist <= 7:
-        features['distanceToEnemies'] = minEnemyDist//2
-      else: features['distanceToEnemies'] = 0
+      if len(enemies):
+        minEnemyDist = min([self.getMazeDistance(myPos, e.getPosition()) for e in enemies])
+      else:
+        minEnemyDist = w+h
+
+      # Depending on the minEnemyDist, act like this
+      if minEnemyDist <= 7:      
+        if minEnemyDist <= 2:
+          features['distanceToEnemies'] = minEnemyDist*2
+          capsules = [c for c in layout.capsules if ((self.red and not gameState.isRed(c)) or (not self.red and gameState.isRed(c)))]
+          if len(capsules):
+            minCapsuleDist = min([self.getMazeDistance(myPos, c) for c in capsules])
+            if minCapsuleDist <= 7:
+              features['distanceToCapsule'] = minCapsuleDist
+              #print(capsules)
+              features['distanceToFood'] = 0
+              #print(features['distanceToFood'], features['distanceToCapsule'])
+
+          if doesEatFood: features['successorScore'] = -1
+
+          if foodCarrying: features['distanceToTeam'] = minTeamDist * 5
+
+          # If the agent got stuck by walls
+          wallCnt = 0
+          if layout.isWall((int(myPos[0]+1), int(myPos[1]))): wallCnt += 1
+          if layout.isWall((int(myPos[0]-1), int(myPos[1]))): wallCnt += 1
+          if layout.isWall((int(myPos[0]), int(myPos[1]-1))): wallCnt += 1
+          if layout.isWall((int(myPos[0]), int(myPos[1]+1))): wallCnt += 1
+          if wallCnt >= 3: features['getStuck'] = 1
+        
+        else:
+          if doesEatFood:
+            features['distanceToFood'] = 0
+            features['distanceToSafeFood'] = 0
+          
+          if foodCarrying >= 3:
+            features['distanceToTeam'] = minTeamDist * 3
+            features['distanceToEnemies'] = minEnemyDist/2
+          
+      else:
+        features['distanceToEnemies'] = 3.5
+        if foodCarrying >= 3:
+          features['distanceToTeam'] = minTeamDist/2
+        else: features['distanceToTeam'] = 0
+    
       
-      if myState.scaredTimer > 0:
-        features['distanceToEnmies'] = 0
+      # If the agent has eaten capsules
+      for o in opponents:
+        if o.scaredTimer > 0:
+          features['distanceToEnemies'] = layout.width+layout.height # encourage the agent eat capsules
 
     if action == Directions.STOP: features['stop'] = 1
     
     return features
 
   def getWeights(self, gameState, action):
-    numHasFood = gameState.getAgentState(self.index).numCarrying
-    if numHasFood >= 2:
-      return {'successorScore': 100, 'distanceToTeam':-5, 'distanceToFood': -1, 'distanceToEnemies': 10, 'stop':-100, 'distanceToCapsule':-2}
-    return {'successorScore': 100, 'distanceToTeam':0, 'distanceToFood': -1, 'distanceToEnemies': 5, 'stop':-10, 'distanceToCapsule':-2}
+    return {
+      'successorScore': 15, 
+      'distanceToTeam': -5, 
+      'distanceToFood': -50, 
+      'distanceToSafeFood': -1, 
+      'distanceToEnemies': 15, 
+      'stop':-20, 
+      'distanceToCapsule': -15, 
+      'getStuck': -100,
+      'killOpponent': 50}
 
 class DefensiveReflexAgent(MyReflexAgent):
   """
@@ -249,6 +311,9 @@ class DefensiveReflexAgent(MyReflexAgent):
       dists = [self.getMazeDistance(myPos, a.getPosition()) for a in invaders]
       features['invaderDistance'] = min(dists)
     else:
+      dists = [self.getMazeDistance(myPos, a.getPosition()) for a in enemies]
+      features['enemyDistance'] = min(dists)
+
       w = layout.width
       h = layout.height
       d = -1 if self.red else 0
@@ -257,13 +322,19 @@ class DefensiveReflexAgent(MyReflexAgent):
       minTeamBorderDist = min([self.getMazeDistance(myPos, t) for t in teamEntry])
       features['distanceToTeamBorder'] = minTeamBorderDist
     
-    capsules = layout.capsules
-    capsulesToMyDists = [self.getMazeDistance(myPos, c) for c in capsules]
-    capsulesToEnemyDists = [[self.getMazeDistance(c, e.getPosition()) for e in enemies] for c in capsules]
-    for i in range(len(capsulesToEnemyDists)):
-      minCTED = min(capsulesToEnemyDists[i])
-      #if (minCTED - capsulesToMyDists[i] <= 5):
-      features['RetrunToCapsules'] = capsulesToMyDists[i]
+    capsules = [c for c in layout.capsules if ((self.red and gameState.isRed(c)) or (not self.red and not gameState.isRed(c)))]
+    if len(capsules):
+      capsulesToMyDists = [self.getMazeDistance(myPos, c) for c in capsules] #cTMD[cIdx]
+      capsulesToEnemyDists = [[self.getMazeDistance(c, e.getPosition()) for e in enemies] for c in capsules] #cTED[cIdx][eIdx]
+      minCTMD = layout.width + layout.height
+      minCTED = layout.width + layout.height
+      for i in range(len(capsules)):
+        for d in capsulesToEnemyDists[i]:
+          if minCTED > d: 
+            minCTED = d
+            minCTMD = capsulesToMyDists[i]
+
+      features['ReturnToCapsules'] = minCTED - minCTMD
 
     if action == Directions.STOP: features['stop'] = 1
     rev = Directions.REVERSE[gameState.getAgentState(self.index).configuration.direction]
@@ -272,5 +343,13 @@ class DefensiveReflexAgent(MyReflexAgent):
     return features
 
   def getWeights(self, gameState, action):
-    return {'numInvaders': -1000, 'onDefense': 100, 'invaderDistance': -20, 'stop': -100, 'reverse': -3, 'distanceToTeamBorder':-1, 'ReturnToCapsules':-10}
+    return {
+      'numInvaders': -1000, 
+      'onDefense': 100, 
+      'invaderDistance': -20, 
+      'stop': -100, 
+      'reverse': -3, 
+      'distanceToTeamBorder':-1, 
+      'ReturnToCapsules':3, 
+      'enemyDistance': -3}
 
