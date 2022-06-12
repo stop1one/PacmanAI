@@ -199,7 +199,7 @@ class OffensiveReflexAgent(MyReflexAgent):
 
   def getWeights(self, gameState, action):
     numHasFood = gameState.getAgentState(self.index).numCarrying
-    if numHasFood >= 2:
+    if numHasFood >= 3:
       return {'successorScore': 100, 'distanceToTeam':-5, 'distanceToFood': -1, 'distanceToEnemies': 5, 'stop':-100}
     return {'successorScore': 100, 'distanceToTeam':0, 'distanceToFood': -1, 'distanceToEnemies': 5, 'stop':-100}
 
