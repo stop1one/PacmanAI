@@ -176,13 +176,29 @@ class OffensiveReflexAgent(MyReflexAgent):
       minTeamDist = min([self.getMazeDistance(myPos, t) for t in teamEntry])
       features['distanceToTeam'] = minTeamDist
 
-      # Compute distance to the nearest food
-      minFoodDist = min([self.getMazeDistance(myPos, food) for food in foodList])
-      features['distanceToFood'] = minFoodDist
+      # # Compute distance to the nearest food
+      # minFoodDist = min([self.getMazeDistance(myPos, food) for food in foodList])
+      # features['distanceToFood'] = minFoodDist
 
       # Compute distance to the nearest enemies
       opponents = [successor.getAgentState(i) for i in self.getOpponents(successor)]
       enemies = [a for a in opponents if not a.isPacman and a.getPosition() != None]
+
+      # evaluate which the food is safe or not
+      safeFood = []
+      for food in foodList:
+        myDist = self.getMazeDistance(myPos, food)
+        enemyDist = min([self.getMazeDistance(food, o.getPosition()) for o in opponents])
+        if myDist < enemyDist+5: safeFood.append(food)
+
+      # Compute distance to the nearest safe food
+      if len(safeFood) > 0:
+        minFoodDist = min([self.getMazeDistance(myPos, food) for food in safeFood])
+        features['distanceToSafeFood'] = minFoodDist
+      else:
+        minFoodDist = min([self.getMazeDistance(myPos, food) for food in foodList])
+        features['distanceToFood'] = minFoodDist
+
       minEnemyDist = min([self.getMazeDistance(myPos, e.getPosition()) for e in enemies])
       if minEnemyDist <= 2:
         features['distanceToEnemies'] = minEnemyDist
@@ -200,8 +216,8 @@ class OffensiveReflexAgent(MyReflexAgent):
   def getWeights(self, gameState, action):
     numHasFood = gameState.getAgentState(self.index).numCarrying
     if numHasFood >= 3:
-      return {'successorScore': 100, 'distanceToTeam':-5, 'distanceToFood': -1, 'distanceToEnemies': 5, 'stop':-100}
-    return {'successorScore': 100, 'distanceToTeam':0, 'distanceToFood': -1, 'distanceToEnemies': 5, 'stop':-100}
+      return {'successorScore': 15, 'distanceToTeam':-5, 'distanceToSafeFood': -1, 'distanceToFood': -50, 'distanceToEnemies': 15, 'stop':-20}
+    return {'successorScore': 15, 'distanceToTeam':0, 'distanceToSafeFood': -1, 'distanceToFood': -50, 'distanceToEnemies': 15, 'stop':-20}
 
 class DefensiveReflexAgent(MyReflexAgent):
   """
